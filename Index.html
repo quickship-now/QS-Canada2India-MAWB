@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quickship MAWB System</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#1967d2;color:#111}
+.page{display:none;min-height:100vh}.page.active{display:block}
+.topbar{height:56px;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.brand{font-weight:700}
+.chip{display:flex;gap:8px;align-items:center}.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1f2937;color:#fff;font-size:12px}
+.btn{border:0;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer}
+.btn-primary{background:#f59e0b;color:#111827}.btn-ghost{background:#1f2937;color:#e5e7eb}
+.wrap{max-width:1500px;margin:0 auto;padding:18px}
+.card{background:#fff;border-radius:12px;padding:16px}
+.login-wrap{max-width:420px;margin:0 auto;padding:28px}
+.login-card{background:#fff;border-radius:14px;padding:20px}
+.f{margin-bottom:12px}.f label{display:block;font-size:12px;color:#4b5563;margin-bottom:4px}
+.f input,.f select,.f textarea{width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:8px}
+.f textarea{min-height:82px;resize:vertical;font-family:inherit}
+.err{display:none;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;padding:8px;border-radius:8px;margin-bottom:12px;font-size:13px}
+.err.show{display:block}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;margin-bottom:12px}
+.stat{background:#0d43b8;color:#e5e7eb;border-radius:10px;padding:10px}.stat .v{font-size:24px;font-weight:700;color:#fff}
+.dash-filters{background:#0d43b8;border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px}
+.dash-filter-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;align-items:end}
+.dash-filter{margin:0}
+.dash-filter label{display:block;font-size:12px;color:#cbd5e1;margin-bottom:4px}
+.dash-filter input,.dash-filter select{width:100%;padding:8px 10px;border:1px solid #334155;border-radius:8px;background:#0b1220;color:#e5e7eb}
+.dash-filter input::placeholder{color:#64748b}
+.dash-filter-actions{display:flex;align-items:flex-end}
+.tbl-wrap{overflow:auto;border:1px solid #334155;border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:900px;background:#0d43b8}
+thead th{font-size:12px;color:#93c5fd;padding:8px;border-bottom:1px solid #334155;text-align:left}
+tbody td{font-size:13px;color:#e5e7eb;padding:9px;border-bottom:1px solid #1f2937}
+.badge{padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700}
+.done{background:#14532d;color:#86efac}.pending{background:#78350f;color:#fcd34d}.none{background:#1f2937;color:#9ca3af}
+.stepper{display:flex;gap:8px;padding:10px 14px;background:#111827;color:#9ca3af;overflow:auto}
+.step{padding:7px 10px;border-radius:7px;background:#1f2937;white-space:nowrap}.step.active{background:#f59e0b;color:#111827;font-weight:700}
+.form-card{max-width:760px;margin:16px auto;background:#fff;border-radius:14px;overflow:hidden}
+.form-head{padding:14px 18px;background:#f3f4f6;border-bottom:1px solid #e5e7eb}
+.form-body{padding:16px 18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row{display:flex;justify-content:space-between;gap:8px;padding:12px 18px;border-top:1px solid #e5e7eb;background:#f9fafb}
+.modal,.loader{position:fixed;inset:0;background:rgba(2,6,23,.75);display:flex;align-items:center;justify-content:center}
+.hide{display:none}.modal-card{background:#fff;border-radius:12px;padding:18px;max-width:520px;width:92%}
+@media (max-width:760px){.stats{grid-template-columns:repeat(2,minmax(120px,1fr))}.dash-filter-grid{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div id="gloader" class="loader"><div class="modal-card"><p id="gloaderTxt">Loading...</p></div></div>
+
+<div id="modal" class="modal hide">
+  <div class="modal-card">
+    <h2 id="mTitle">Saved</h2>
+    <p id="mMsg"></p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="goToDashboard()">Back To Dashbord</button>
+    </div>
+  </div>
+</div>
+
+<div id="pgLogin" class="page">
+  <div class="login-wrap">
+    <div class="login-card">
+      <h2 style="margin:0 0 4px 0">Quickship MAWB System</h2>
+      <p style="margin:0 0 16px 0;color:#6b7280;font-size:13px">Sign in</p>
+      <div class="err" id="loginErr"></div>
+      <div class="f">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="f">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<div id="pgDash" class="page">
+  <header class="topbar">
+    <div class="brand">Quickship MAWB System</div>
+    <div class="chip">
+      <div class="avatar" id="dAv"></div>
+      <div><div id="dName" style="font-size:13px"></div><div id="dRole" style="font-size:11px;color:#9ca3af"></div></div>
+      <button class="btn btn-ghost" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <div>
+        <h2 id="dashTitle" style="margin:0;color:#fff"></h2>
+        <p id="dashSub" style="margin:3px 0 0 0;color:#94a3b8;font-size:13px"></p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" id="refreshBtn" onclick="loadDashboard()">Refresh</button>
+        <button class="btn btn-primary" id="newBtn" style="display:none" onclick="openNewForm()">+ New Entry</button>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div>Total</div><div class="v" id="stTotal">—</div></div>
+      <div class="stat"><div>Sahib</div><div class="v" id="stSH">—</div></div>
+      <div class="stat"><div>Meenakshi</div><div class="v" id="stM">—</div></div>
+    </div>
+    <div id="roleCard" class="card" style="margin-bottom:12px"></div>
+    <div class="dash-filters">
+      <div class="dash-filter-grid">
+        <div class="dash-filter">
+          <label for="fltBookingDate">Booking Date</label>
+          <input type="date" id="fltBookingDate" oninput="applyDashboardFilters()" onchange="applyDashboardFilters()">
+        </div>
+        <div class="dash-filter">
+          <label for="fltMAWB">MAWB Search</label>
+          <input type="text" id="fltMAWB" placeholder="Enter MAWB" oninput="applyDashboardFilters()">
+        </div>
+        <div class="dash-filter">
+          <label for="fltCONS">Consignee Search</label>
+          <input type="text" id="fltCONS" placeholder="Enter Consignee" oninput="applyDashboardFilters()">
+        </div>
+         <div class="dash-filter">
+          <label for="fltDEST">Destination Search</label>
+          <input type="text" id="fltDEST" placeholder="Enter Destination" oninput="applyDashboardFilters()">
+        </div>
+        <div class="dash-filter">
+          <label for="fltStatus">Status</label>
+          <select id="fltStatus" onchange="applyDashboardFilters()">
+            <option value="all">All</option>
+            <option value="done">Done</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+        <div class="dash-filter-actions">
+          <button class="btn btn-ghost" onclick="resetDashboardFilters()">Clear Filters</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="color:#fff;font-weight:700">All Bookings</div>
+      <div id="tblCount" style="color:#94a3b8;font-size:13px"></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead id="tblHead"></thead>
+        <tbody id="tblBody"><tr><td>Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="pgForm" class="page">
+  <header class="topbar">
+    <div class="brand">Quickship MAWB Entry</div>
+    <div class="chip">
+      <div class="avatar" id="fAv"></div>
+      <div><div id="fName" style="font-size:13px"></div><div id="fRole" style="font-size:11px;color:#9ca3af"></div></div>
+      <button class="btn btn-ghost" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+  <div class="stepper">
+    <div class="step" id="st-sahib">1 Sahib Khan</div>
+    <div class="step" id="st-meenakshi">2 Meenakshi</div>
+  </div>
+  <div class="wrap">
+    <div class="form-card">
+      <div class="form-head">
+        <div id="fHead"></div>
+        <div id="recStrip" style="display:none;margin-top:8px;font-size:13px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 8px">
+          Editing record <b id="recStripId"></b>
+        </div>
+        <div id="errBar" class="err" style="margin-top:8px"></div>
+      </div>
+      <div class="form-body"><div id="formBody"></div></div>
+      <div class="row">
+        <div id="footHint" style="font-size:13px;color:#6b7280"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" onclick="goToDashboard()">Dashboard</button>
+          <button class="btn btn-primary" id="saveBtn" onclick="handleSubmit()">Save Section</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var _INIT = {};
+try {
+  _INIT = JSON.parse('<?= APP_INIT_JSON ?>');
+} catch (e) {
+  var _qs = {};
+  try {
+    (window.location.search || '').replace(/^\?/,'').split('&').forEach(function(p){
+      var kv = p.split('=');
+      if (kv[0]) _qs[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+    });
+  } catch (e2) {}
+  _INIT = {page:_qs.page || 'login', section:_qs.section || 'sahib', recordId:_qs.recordId || '', data:{}};
+}
+
+var STATE = {
+  user: null,
+  page: _INIT.page || 'login',
+  section: (_INIT.section || 'sahib').toLowerCase(),
+  recordId: _INIT.recordId || '',
+  formData: _INIT.data || {},
+  dashRows: []
+};
+
+var SECTIONS = ['sahib','meenakshi'];
+var CFG = {
+  sahib:{
+    label:'Sahib Khan', roleDesc:'Create bookings and fill the shipment details.',
+    fields:[
+      {k:'Booking Date',l:'Booking Date',t:'date',r:true},
+      {k:'Consignee',l:'Consignee',t:'text',r:true},
+      {k:'IATA Agent',l:'IATA Agent',t:'select',r:true,opts:['','Inter Rail','Bridges','Inext Logistics','Gas Logistics','ASR Logistics','GAC Courier','Jet Freight','Index Logistics','Zack Logistics','Unified Logistics','Bass Freight']},
+      {k:'MAWB',l:'MAWB',t:'text',r:true},
+      {k:'Weight',l:'Weight',t:'text',r:true},
+      {k:'Booked By',l:'Booked By',t:'text',r:true},
+      {k:'Origin',l:'Origin',t:'text',r:true},
+      {k:'Destination',l:'Destination',t:'text',r:true}
+    ]
+  },
+  meenakshi:{
+    label:'Meenakshi', roleDesc:'Complete the pre-alert, manifest, acknowledgement, and pickup details.',
+    fields:[
+      {k:'Pre Alert DateTime',l:'Pre Alert Date & Time',t:'datetime-local',r:true},
+      {k:'Pre Alert Sent To URL',l:'Pre Alert Sent To URL',t:'url',r:true},
+      {k:'Manifest DateTime',l:'Manifest Date & Time',t:'datetime-local',r:true},
+      {k:'Pre Alert Ack DateTime',l:'Pre Alert Acknowledge Date & Time',t:'datetime-local',r:true},
+      {k:'Pick Up DateTime',l:'Pick Up Date & Time',t:'datetime-local',r:true}
+    ]
+  }
+};
+
+window.addEventListener('load', function() {
+  try {
+    var s = sessionStorage.getItem('fbsUser');
+    if (s) STATE.user = JSON.parse(s);
+  } catch (e) {}
+  if (STATE.page === 'form' && STATE.user) {
+    STATE.section = STATE.user.role;
+    showPage('pgForm'); renderFormPage(); gloader(false);
+  } else if (STATE.user) {
+    showPage('pgDash'); renderDashPage(); loadDashboard();
+  } else {
+    showPage('pgLogin'); gloader(false);
+  }
+});
+
+function showPage(id){
+  ['pgLogin','pgDash','pgForm'].forEach(function(p){document.getElementById(p).classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+}
+
+function doLogin() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pass = document.getElementById('loginPass').value.trim();
+  var err = document.getElementById('loginErr');
+  err.classList.remove('show');
+  if (!email || !pass) { err.textContent = 'Please enter email and password.'; err.classList.add('show'); return; }
+  var btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  scriptRun('login', [email, pass], function(res){
+    btn.disabled = false; btn.textContent = 'Sign In';
+    if (!res || !res.success) { err.textContent = (res && res.error) || 'Login failed.'; err.classList.add('show'); return; }
+    STATE.user = res.user;
+    try { sessionStorage.setItem('fbsUser', JSON.stringify(res.user)); } catch (e) {}
+    showPage('pgDash'); renderDashPage(); loadDashboard();
+  }, function(e){
+    btn.disabled = false; btn.textContent = 'Sign In';
+    err.textContent = 'Error: ' + (e.message || e); err.classList.add('show');
+  });
+}
+
+function doLogout() {
+  STATE.user = null;
+  try { sessionStorage.removeItem('fbsUser'); } catch (e) {}
+  showPage('pgLogin');
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+function renderDashPage() {
+  var u = STATE.user; if (!u) return;
+  setChip('dAv','dName','dRole',u);
+  document.getElementById('dashTitle').textContent = 'Welcome, ' + u.name;
+  document.getElementById('dashSub').textContent = cap(u.role) + ' dashboard';
+  document.getElementById('newBtn').style.display = (u.role === 'sahib') ? 'inline-block' : 'none';
+  document.getElementById('roleCard').innerHTML = '<b>Role:</b> ' + cap(u.role) + '<br><span style="color:#6b7280;font-size:13px">' + (CFG[u.role] ? CFG[u.role].roleDesc : '') + '</span>';
+  renderTblHead(u.role);
+  resetDashboardFilters(true);
+}
+
+function setChip(avId,nId,rId,u){
+  var av = document.getElementById(avId);
+  av.textContent = (u.name || 'U').charAt(0).toUpperCase();
+  document.getElementById(nId).textContent = u.name || '';
+  document.getElementById(rId).textContent = cap(u.role || '');
+}
+
+function renderTblHead(role){
+  var cols = {
+    sahib: ['#','Record ID','Booking Date','Consignee','IATA Agent','MAWB','Weight','Booked By','Origin','Destination','Status','Created','Action'],
+    meenakshi: ['#','Record ID','Booking Date','Consignee','MAWB','Origin','Destination','Pre Alert Date & Time','Pre Alert Sent To URL','Manifest Date & Time','Ack Date & Time','Pick Up Date & Time','Sahib Status','Meenakshi Status','Action']
+  };
+  var ths = cols[role] || cols.sahib;
+  document.getElementById('tblHead').innerHTML = '<tr>' + ths.map(function(h){ return '<th>' + h + '</th>'; }).join('') + '</tr>';
+}
+
+function loadDashboard(){
+  gloader(true, 'Loading dashboard...');
+  scriptRun('getDashboard', [], function(res){
+    gloader(false);
+    if (!res || !res.success) { alert((res && res.error) || 'Error loading dashboard'); return; }
+    var rows = res.rows || [];
+    STATE.dashRows = rows;
+    renderStats(rows);
+    applyDashboardFilters();
+  }, function(e){ gloader(false); alert('Error: ' + (e.message || e)); });
+}
+
+function renderStats(rows){
+  document.getElementById('stTotal').textContent = rows.length;
+  var done = function(k){ return rows.filter(function(r){ return r[k] === 'Submitted \u2713'; }).length; };
+  document.getElementById('stSH').textContent = done('Sahib Khan Status');
+  document.getElementById('stM').textContent = done('Meenakshi Status');
+}
+
+function resetDashboardFilters(silent){
+  var d = document.getElementById('fltBookingDate');
+  var m = document.getElementById('fltMAWB');
+  var t = document.getElementById('fltCONS');
+  var f = document.getElementById('fltDEST');
+  var s = document.getElementById('fltStatus');
+  if (d) d.value = '';
+  if (m) m.value = '';
+  if (t) t.value = '';
+  if (f) f.value = '';
+  if (s) s.value = 'all';
+  if (!silent) applyDashboardFilters();
+}
+
+function getRoleStatusKey(role){
+  return {
+    sahib: 'Sahib Khan Status',
+    meenakshi: 'Meenakshi Status'
+  }[role] || 'Sahib Khan Status';
+}
+
+function isDoneStatus(v){
+  return String(v || '').indexOf('\u2713') >= 0;
+}
+
+function normalizeToIsoDate(v){
+  var s = String(v || '').trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return m[3] + '-' + pad(parseInt(m[2], 10)) + '-' + pad(parseInt(m[1], 10));
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
+function applyDashboardFilters(){
+  var rows = STATE.dashRows || [];
+  var bookingDate = (document.getElementById('fltBookingDate') || {}).value || '';
+  var mawb = String((document.getElementById('fltMAWB') || {}).value || '').trim().toLowerCase();
+  var cons = String((document.getElementById('fltCONS') || {}).value || '').trim().toLowerCase();
+  var dest = String((document.getElementById('fltDEST') || {}).value || '').trim().toLowerCase();
+  var status = (document.getElementById('fltStatus') || {}).value || 'all';
+  var role = STATE.user ? STATE.user.role : 'sahib';
+  var statusKey = getRoleStatusKey(role);
+
+  var filtered = rows.filter(function(r){
+    if (bookingDate && normalizeToIsoDate(r['Booking Date']) !== bookingDate) return false;
+    if (mawb && String(r['MAWB'] || '').toLowerCase().indexOf(mawb) === -1) return false;
+    if (cons && String(r['Consignee'] || '').toLowerCase().indexOf(cons) === -1) return false;
+    if (dest && String(r['Destination'] || '').toLowerCase().indexOf(dest) === -1) return false;
+    if (status === 'done' && !isDoneStatus(r[statusKey])) return false;
+    if (status === 'pending' && isDoneStatus(r[statusKey])) return false;
+    return true;
+  });
+
+  renderTable(filtered);
+  document.getElementById('tblCount').textContent =
+    filtered.length + ' of ' + rows.length + ' record' + (rows.length === 1 ? '' : 's');
+}
+
+function renderTable(rows){
+  var role = STATE.user ? STATE.user.role : 'sahib';
+  var tbody = document.getElementById('tblBody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="' + (role === 'meenakshi' ? '15' : '13') + '">No records found.</td></tr>';
+    return;
+  }
+  function badge(v){
+    if (!v) return '<span class="badge none">-</span>';
+    if (String(v).indexOf('\u2713') >= 0) return '<span class="badge done">Done</span>';
+    return '<span class="badge pending">' + esc(v) + '</span>';
+  }
+  var html = '';
+  rows.forEach(function(r, i){
+    var rid = r['Record ID'];
+    html += '<tr>';
+    var num = '<td>' + (i + 1) + '</td>';
+    var id = '<td><code>' + esc(rid || '') + '</code></td>';
+    if (role === 'sahib') {
+      html += num + id +
+        '<td>' + esc(r['Booking Date'] || '-') + '</td>' +
+        '<td>' + esc(r['Consignee'] || '-') + '</td>' +
+        '<td>' + esc(r['IATA Agent'] || '-') + '</td>' +
+        '<td>' + esc(r['MAWB'] || '-') + '</td>' +
+        '<td>' + esc(r['Weight'] || '-') + '</td>' +
+        '<td>' + esc(r['Booked By'] || '-') + '</td>' +
+        '<td>' + esc(r['Origin'] || '-') + '</td>' +
+        '<td>' + esc(r['Destination'] || '-') + '</td>' +
+        '<td>' + badge(r['Sahib Khan Status']) + '</td>' +
+        '<td>' + esc(r['Created At'] || '-') + '</td>' +
+        '<td><button class="btn btn-ghost" onclick="openEdit(\'' + escA(rid) + '\',\'sahib\')">Edit</button></td>';
+    } else {
+      html += num + id +
+        '<td>' + esc(r['Booking Date'] || '-') + '</td>' +
+        '<td>' + esc(r['Consignee'] || '-') + '</td>' +
+        '<td>' + esc(r['MAWB'] || '-') + '</td>' +
+        '<td>' + esc(r['Origin'] || '-') + '</td>' +
+        '<td>' + esc(r['Destination'] || '-') + '</td>' +
+        '<td>' + esc(r['Pre Alert DateTime'] || '-') + '</td>' +
+        '<td>' + linkValue(r['Pre Alert Sent To URL']) + '</td>' +
+        '<td>' + esc(r['Manifest DateTime'] || '-') + '</td>' +
+        '<td>' + esc(r['Pre Alert Ack DateTime'] || '-') + '</td>' +
+        '<td>' + esc(r['Pick Up DateTime'] || '-') + '</td>' +
+        '<td>' + badge(r['Sahib Khan Status']) + '</td>' +
+        '<td>' + badge(r['Meenakshi Status']) + '</td>' +
+        '<td><button class="btn btn-ghost" onclick="openEdit(\'' + escA(rid) + '\',\'meenakshi\')">Edit</button></td>';
+    }
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function openNewForm(){
+  STATE.section = 'sahib';
+  STATE.recordId = '';
+  STATE.formData = {};
+  showPage('pgForm');
+  renderFormPage();
+}
+
+function openEdit(recordId, section){
+  STATE.recordId = recordId;
+  STATE.section = section;
+  STATE.formData = {};
+  gloader(true, 'Loading record...');
+  scriptRun('getRecord', [recordId], function(res){
+    gloader(false);
+    STATE.formData = (res && res.found) ? (res.data || {}) : {};
+    showPage('pgForm');
+    renderFormPage();
+  }, function(){
+    gloader(false);
+    showPage('pgForm');
+    renderFormPage();
+  });
+}
+
+function renderFormPage(){
+  var u = STATE.user, s = STATE.section, c = CFG[s];
+  if (!u || !c) return;
+  setChip('fAv','fName','fRole',u);
+  SECTIONS.forEach(function(sec){
+    var el = document.getElementById('st-' + sec);
+    if (el) el.className = 'step' + (sec === s ? ' active' : '');
+  });
+  document.getElementById('fHead').innerHTML = '<b>' + c.label + ' Section</b><div style="font-size:13px;color:#6b7280;margin-top:3px">' + c.roleDesc + '</div>';
+  var recStrip = document.getElementById('recStrip');
+  if (STATE.recordId) { document.getElementById('recStripId').textContent = STATE.recordId; recStrip.style.display = 'block'; }
+  else recStrip.style.display = 'none';
+  clearErrBar();
+  var idx = SECTIONS.indexOf(s), nxt = SECTIONS[idx + 1];
+  document.getElementById('footHint').innerHTML = 'Step <b>' + (idx + 1) + '</b> of <b>' + SECTIONS.length + '</b>' + (nxt ? ' · Next: <b>' + CFG[nxt].label + '</b>' : '');
+  var d = STATE.formData || {};
+  var html = '<div class="grid">';
+  c.fields.forEach(function(f){
+    var raw = (d[f.k] !== undefined && d[f.k] !== null) ? String(d[f.k]) : '';
+    var req = f.r ? ' *' : '';
+    var control = '';
+    if (f.t === 'select'){
+      control = '<select id="ff_' + eid(f.k) + '" data-r="' + (f.r ? '1':'0') + '">';
+      (f.opts || []).forEach(function(o){ control += '<option value="' + esc(o) + '"' + (o === raw ? ' selected':'') + '>' + esc(o || '— Select —') + '</option>'; });
+      control += '</select>';
+    } else if (f.t === 'datetime-local') {
+      var dtv = '';
+      if (raw) {
+        try {
+          var dt = new Date(raw);
+          dtv = !isNaN(dt.getTime()) ? (dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes())) : raw;
+        } catch (e) { dtv = raw; }
+      }
+      control = '<input type="datetime-local" id="ff_' + eid(f.k) + '" data-r="' + (f.r ? '1':'0') + '" value="' + esc(dtv) + '">';
+    } else if (f.t === 'date') {
+      var dv = '';
+      if (raw) {
+        try {
+          var dd;
+          if (/^\d{2}\/\d{2}\/\d{4}/.test(raw)) { var p = raw.split('/'); dd = new Date(p[2], p[1]-1, p[0]); }
+          else dd = new Date(raw);
+          if (!isNaN(dd.getTime())) dv = dd.getFullYear() + '-' + pad(dd.getMonth()+1) + '-' + pad(dd.getDate());
+        } catch (e2) {}
+      }
+      control = '<input type="date" id="ff_' + eid(f.k) + '" data-r="' + (f.r ? '1':'0') + '" value="' + esc(dv) + '">';
+    } else if (f.t === 'textarea') {
+      control = '<textarea id="ff_' + eid(f.k) + '" data-r="' + (f.r ? '1':'0') + '">' + esc(raw) + '</textarea>';
+    } else {
+      control = '<input type="' + f.t + '" id="ff_' + eid(f.k) + '" data-r="' + (f.r ? '1':'0') + '" value="' + esc(raw) + '">';
+    }
+    html += '<div class="f"><label>' + esc(f.l) + req + '</label>' + control + '</div>';
+  });
+  html += '</div>';
+  document.getElementById('formBody').innerHTML = html;
+}
+
+function handleSubmit(){
+  var c = CFG[STATE.section];
+  if (!c) return;
+  clearErrBar();
+  var fields = {};
+  var valid = true;
+  c.fields.forEach(function(f){
+    var el = document.getElementById('ff_' + eid(f.k));
+    if (!el) return;
+    var v = el.value.trim();
+    el.style.borderColor = '#d1d5db';
+    if (f.r && !v) { valid = false; el.style.borderColor = '#ef4444'; }
+    fields[f.k] = v;
+  });
+  if (!valid) { showErrBar('Please fill all required fields.'); return; }
+  var btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  scriptRun('saveSection', [{section:STATE.section, recordId:STATE.recordId, fields:fields}], function(res){
+    btn.disabled = false; btn.textContent = 'Save Section';
+    if (!res || !res.success) { showErrBar((res && res.error) || 'Save failed.'); return; }
+    if (!STATE.recordId) STATE.recordId = res.recordId;
+    showModal(res);
+  }, function(e){
+    btn.disabled = false; btn.textContent = 'Save Section';
+    showErrBar('Error: ' + (e.message || e));
+  });
+}
+
+function goToDashboard(){ closeModal(); showPage('pgDash'); loadDashboard(); }
+
+function showModal(res){
+  var sectionStatus = res && res.statuses ? res.statuses[STATE.section] : '';
+  var isDone = isDoneStatus(sectionStatus);
+  document.getElementById('mTitle').textContent = (isDone ? 'Section complete' : 'Section pending');
+  document.getElementById('mMsg').textContent = 'Record ID: ' + res.recordId + (sectionStatus ? ' | Status: ' + sectionStatus : '');
+  document.getElementById('modal').classList.remove('hide');
+}
+function closeModal(){ document.getElementById('modal').classList.add('hide'); }
+
+function gloader(on, txt){
+  var el = document.getElementById('gloader');
+  if (on) { document.getElementById('gloaderTxt').textContent = txt || 'Loading...'; el.classList.remove('hide'); }
+  else el.classList.add('hide');
+}
+function showErrBar(msg){ var e = document.getElementById('errBar'); e.textContent = msg; e.classList.add('show'); }
+function clearErrBar(){ var e = document.getElementById('errBar'); e.textContent = ''; e.classList.remove('show'); }
+function cap(s){ s = String(s || ''); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function pad(n){ return n < 10 ? '0' + n : String(n); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escA(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function eid(s){ return String(s).replace(/[^a-zA-Z0-9]/g,'_'); }
+function linkValue(v){
+  var s = String(v || '').trim();
+  if (!s) return '-';
+  if (!/^https?:\/\//i.test(s)) return esc(s);
+  return '<a href="' + esc(s) + '" target="_blank" rel="noopener noreferrer">Open link</a>';
+}
+
+function scriptRun(fn,args,onOk,onErr){
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    var r = google.script.run.withSuccessHandler(onOk).withFailureHandler(onErr || function(e){ alert(e.message || e); });
+    r[fn].apply(r,args);
+  } else {
+    setTimeout(function(){
+      var DEMO = [
+        {"Record ID":"FR-1001","Created At":"20/03/2026 12:00","Booking Date":"2026-03-20","Consignee":"Sample Co","IATA Agent":"Inext Logistics","MAWB":"MAWB-001","Weight":"10","Booked By":"Sahib Khan","Origin":"DEL","Destination":"YYZ","Sahib Khan Status":"Submitted \u2713","Pre Alert DateTime":"2026-03-20 12:30","Pre Alert Sent To URL":"https://example.com/pre-alert","Manifest DateTime":"2026-03-20 13:00","Pre Alert Ack DateTime":"2026-03-20 14:00","Pick Up DateTime":"2026-03-21 09:00","Meenakshi Status":"Submitted \u2713"}
+      ];
+      var users = {
+        'sk@quickshipnow.com': {pass:'sahib123', role:'sahib', name:'Sahib Khan'},
+        'meenakshi@quickshipnow.com': {pass:'meenakshi123', role:'meenakshi', name:'Meenakshi'}
+      };
+      if (fn === 'login') {
+        var u = users[String(args[0] || '').toLowerCase()];
+        if (u && u.pass === args[1]) onOk({success:true, user:{email:args[0], role:u.role, name:u.name}});
+        else onOk({success:false, error:'Invalid email or password.'});
+      } else if (fn === 'getDashboard') {
+        onOk({success:true, rows:DEMO});
+      } else if (fn === 'getRecord') {
+        var row = DEMO.filter(function(x){ return x['Record ID'] === args[0]; })[0] || {};
+        onOk({found: !!row['Record ID'], data: row});
+      } else if (fn === 'saveSection') {
+        var rid = args[0].recordId || ('FR-' + Date.now());
+        var b = window.location.origin + window.location.pathname;
+        onOk({
+          success:true,
+          recordId:rid,
+          urls:{
+            sahib:b + '?page=form&recordId=' + rid + '&section=sahib',
+            meenakshi:b + '?page=form&recordId=' + rid + '&section=meenakshi'
+          }
+        });
+      }
+    }, 400);
+  }
+}
+</script>
+</body>
+</html>

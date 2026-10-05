@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Quickship MAWB System</title>
 <script>
-window.WORKFLOW_API_URL = "https://script.google.com/macros/s/AKfycbwWJG3sK3_HmSvYxgAz5qttAw7A60xhKPHsMCIEwGcWRuVM8yLPp_tSmlJquJ_URR1l/exec";
+window.WORKFLOW_API_URL = "https://script.google.com/macros/s/AKfycbyiTueRYlfqdfDXftPvl8t745vzO34uyP95xEWtKM773dsy8EHJYK4POo1bvqP3ldFMKg/exec";
 </script>
 <script src="config.js"></script>
 <style>
@@ -239,6 +239,16 @@ var CFG = {
 };
 
 window.addEventListener('load', function() {
+  if (!(typeof google !== 'undefined' && google.script && google.script.run)) {
+    STATE.user = null;
+    try { sessionStorage.removeItem('fbsUser'); } catch (e0) {}
+    showPage('pgLogin');
+    var connectionError = document.getElementById('loginErr');
+    connectionError.textContent = 'Google Sheets is not connected. Open the deployed Google Apps Script Web app URL.';
+    connectionError.classList.add('show');
+    gloader(false);
+    return;
+  }
   try {
     var s = sessionStorage.getItem('fbsUser');
     if (s) STATE.user = JSON.parse(s);
@@ -589,36 +599,9 @@ function scriptRun(fn,args,onOk,onErr){
     var r = google.script.run.withSuccessHandler(onOk).withFailureHandler(onErr || function(e){ alert(e.message || e); });
     r[fn].apply(r,args);
   } else {
-    setTimeout(function(){
-      var DEMO = [
-        {"Record ID":"FR-1001","Created At":"20/03/2026 12:00","Booking Date":"2026-03-20","Consignee":"Sample Co","IATA Agent":"Inext Logistics","MAWB":"MAWB-001","Weight":"10","Booked By":"Sahib Khan","Origin":"DEL","Destination":"YYZ","Sahib Khan Status":"Submitted \u2713","Pre Alert DateTime":"2026-03-20 12:30","Pre Alert Sent To URL":"https://example.com/pre-alert","Manifest DateTime":"2026-03-20 13:00","Pre Alert Ack DateTime":"2026-03-20 14:00","Pick Up DateTime":"2026-03-21 09:00","Meenakshi Status":"Submitted \u2713"}
-      ];
-      var users = {
-        'sk@quickshipnow.com': {pass:'sahib123', role:'sahib', name:'Sahib Khan'},
-        'meenakshi@quickshipnow.com': {pass:'meenakshi123', role:'meenakshi', name:'Meenakshi'}
-      };
-      if (fn === 'login') {
-        var u = users[String(args[0] || '').toLowerCase()];
-        if (u && u.pass === args[1]) onOk({success:true, user:{email:args[0], role:u.role, name:u.name}});
-        else onOk({success:false, error:'Invalid email or password.'});
-      } else if (fn === 'getDashboard') {
-        onOk({success:true, rows:DEMO});
-      } else if (fn === 'getRecord') {
-        var row = DEMO.filter(function(x){ return x['Record ID'] === args[0]; })[0] || {};
-        onOk({found: !!row['Record ID'], data: row});
-      } else if (fn === 'saveSection') {
-        var rid = args[0].recordId || ('FR-' + Date.now());
-        var b = window.location.origin + window.location.pathname;
-        onOk({
-          success:true,
-          recordId:rid,
-          urls:{
-            sahib:b + '?page=form&recordId=' + rid + '&section=sahib',
-            meenakshi:b + '?page=form&recordId=' + rid + '&section=meenakshi'
-          }
-        });
-      }
-    }, 400);
+    var err = new Error('Google Apps Script backend is unavailable. Open the deployed Web app URL.');
+    if (onErr) onErr(err);
+    else alert(err.message);
   }
 }
 </script>

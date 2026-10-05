@@ -1,8 +1,12 @@
 // Quickship MAWB System
 // Sections: Sahib Khan -> Meenakshi
 
-var BOOKING_SHEET = "FreightBookings";
+var BOOKING_SHEET = "MAWBTracker";
 var USERS_SHEET = "Users";
+// Leave blank for a script opened from Extensions > Apps Script in the target Sheet.
+// For a standalone Apps Script project, paste the Google Sheet ID here.
+var SPREADSHEET_ID = "1bA8Za3oeSQZbZFmNypq982gvfDuBtLZ9smG3h9iXgU4";
+var SPREADSHEET_PROPERTY_KEY = "quickship_mawb_spreadsheet_id";
 var USER_CACHE_KEY = "quickship_mawb_users_v1";
 var USER_CACHE_SECONDS = 600;
 
@@ -110,7 +114,7 @@ function refreshAllStatuses() {
 }
 
 function rearrangeHeadersAndSyncData() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sh = ss.getSheetByName(BOOKING_SHEET);
   if (!sh) {
     sh = ss.insertSheet(BOOKING_SHEET);
@@ -123,6 +127,15 @@ function rearrangeHeadersAndSyncData() {
   var currentLastCol = Math.max(sh.getLastColumn(), BOOKING_HEADERS.length);
   var currentHeaders = sh.getRange(1, 1, 1, currentLastCol).getValues()[0];
   return migrateBookingHeaders_(sh, currentHeaders, { rebuildLinks: true, refreshStatuses: true });
+}
+
+function healthCheck() {
+  try {
+    var ss = getSpreadsheet_();
+    return { success: true, spreadsheetId: ss.getId(), spreadsheetName: ss.getName() };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 function login(email, password) {
@@ -350,7 +363,7 @@ function findRow(sh, recordId) {
 }
 
 function getOrCreateBookingSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sh = ss.getSheetByName(BOOKING_SHEET);
   if (!sh) {
     sh = ss.insertSheet(BOOKING_SHEET);
@@ -452,7 +465,7 @@ function styleBookingHeaders(sh) {
 }
 
 function getOrCreateUsersSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sh = ss.getSheetByName(USERS_SHEET);
   if (!sh) {
     sh = ss.insertSheet(USERS_SHEET);
@@ -468,6 +481,27 @@ function getOrCreateUsersSheet() {
     sh.setColumnWidth(idx + 1, [200, 140, 100, 150][idx]);
   });
   return sh;
+}
+
+function getSpreadsheet_() {
+  var configuredId = String(SPREADSHEET_ID || "").trim();
+  if (configuredId) return SpreadsheetApp.openById(configuredId);
+
+  var properties = PropertiesService.getScriptProperties();
+  var savedId = String(properties.getProperty(SPREADSHEET_PROPERTY_KEY) || "").trim();
+  if (savedId) return SpreadsheetApp.openById(savedId);
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) {
+    properties.setProperty(SPREADSHEET_PROPERTY_KEY, ss.getId());
+    return ss;
+  }
+  if (!ss) {
+    throw new Error(
+      "No Google Sheet is connected. Open this script from the target Sheet using Extensions > Apps Script, " +
+      "run rearrangeHeadersAndSyncData once, or set SPREADSHEET_ID in Code.gs."
+    );
+  }
 }
 
 function getCachedUserRows_() {
